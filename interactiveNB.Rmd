@@ -1,0 +1,183 @@
+---
+title: 'Project 3: Census Data'
+author: "Devin Luu, Daniel Stroik, Michael Grube, Mark Dillemuth"
+resource_files:
+- .Renviron
+output:
+  html_notebook:
+    code_folding: hide
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(data.world)
+library(shiny)
+library(gridExtra) #grid.arrange()
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+  
+## **R Session Info**  
+
+```{r}
+sessionInfo()
+```
+
+## **Github Link** 
+https://github.com/devtl/f17-edv-project3
+
+## **Introduction** 
+Fall 2017 Data Visualization Project. We want to explore tobacco usage among highschool teenagers using data from the U.S. Census Bureau.
+
+Dataset is stored on https://data.world/devtl/f-17-edv-project-3.
+
+## **Getting data from data.world** 
+We will be using the Fatal Police Shootings data and some census data from the U.S. Census Bureau from [data.world](https://data.world/devtl/fatalpoliceshootings/)
+
+```{r}
+project <- "https://data.world/devtl/f-17-edv-project-3/"
+data.world::set_config(cfg_env("DW_API"))
+df <- data.world::query(data.world::qry_sql("select smoking.surveyyear as year,
+    smoking.statecode as state,
+    poverty.geoid,
+    ((poverty.b17001_008 + poverty.b17001_009) + (poverty.b17001_022 + poverty.b17001_023))/poverty.b17001_002 as belowpoverty_highschool,
+    (poverty.b17001_008 + poverty.b17001_009)/poverty.b17001_002 as belowpoverty_highschool_m,
+    (poverty.b17001_022 + poverty.b17001_023)/poverty.b17001_002 as belowpoverty_highschool_f,
+    smoking.EverTryCigT as ever_tried,
+    smoking.EverTryCigF as evertried_f,
+    smoking.EverTryCigM as evertried_m,
+    smoking.CigBefore13T as before13,
+    smoking.CigBefore13F as before13_f,
+    smoking.CigBefore13M as before13_m,
+    smoking.CurrentCigT as currentsmoker,
+    smoking.CurrentCigF as currentsmoker_f,
+    smoking.CurrentCigM as currentsmoker_m,
+    smoking.FrequentCigT as freqsmoker,
+    smoking.FrequentCigF as freqsmoker_f,
+    smoking.FrequentCigM as freqsmoker_m,
+    smoking.TenCigDayT as 10aday,
+    smoking.TenCigDayF as 10aday_f,
+    smoking.TenCigDayM as 10aday_m,
+    smoking.NotTryQuitT as notquit,
+    smoking.NotTryQuitF as notquit_f,
+    smoking.NotTryQuitM as notquit_m,
+    smoking.CigAtSchoolT as atschool,
+    smoking.CigAtSchoolF as atschool_f,
+    smoking.CigAtSchoolM as atschool_m,
+    smoking.BuyCigAtStoreT as buyscigs,
+    smoking.BuyCigAtStoreF as buyscigs_f,
+    smoking.BuyCigAtStoreM as buyscigs_m,
+    smoking.EverCigDailyT as atleast1_daily,
+    smoking.EverCigDailyF as atleast1_daily_f,
+    smoking.EverCigDailyM as atleast1_daily_m,
+    smoking.CigAll30DaysT as 30days,
+    smoking.CigAll30DaysT as 30days_f,
+    smoking.CigAll30DaysT as 30days_m,
+    smoking.CurrentSmokelessT as smokeless,
+    smoking.CurrentSmokelessT as smokeless_f,
+    smoking.CurrentSmokelessT as smokeless_m,
+    smoking.CurrentCigarT as cigar,
+    smoking.CurrentCigarF as cigar_f,
+    smoking.CurrentCigarM as cigar_m,
+    smoking.CurrentAnyTobaccoT as anytobacco,
+    smoking.CurrentAnyTobaccoF as anytobacco_f,
+    smoking.CurrentAnyTobaccoM as anytobacco_m
+    
+from health.`yrbs-state-tobacco-variables`.yrbs_state_tobacco_variables_2013_v2 as smoking
+join uscensusbureau.`acs-2015-5-e-poverty`.usa_all_states as poverty 
+    on smoking.statecode = poverty.state"), dataset = project)
+summary(df)
+```
+
+
+##Scatterplots{.tabset .tabset-fade}
+
+Various Tobacco Usages vs. Highschool Poverty Levels
+
+###Any type of Tobacco Usage
+```{r}
+df1 = df %>% dplyr::select(belowpoverty_highschool, anytobacco, atleast1_daily, atschool, before13, currentsmoker, freqsmoker, state)
+
+renderPlot({
+  pl1 = ggplot(df1, mapping = aes(belowpoverty_highschool, anytobacco, color = state)) + geom_point(size = 1.5) + theme_minimal()
+  
+ pl1 
+})
+```
+
+###Daily Smokers
+```{r}
+renderPlot({
+  pl2 = ggplot(df1, mapping = aes(belowpoverty_highschool, atleast1_daily, color = state)) + geom_point(size = 1.5) + theme_minimal()
+  
+  pl2
+  
+})
+```
+
+
+###Smokes at School
+```{r}
+renderPlot({
+  pl3 = ggplot(df1, mapping = aes(belowpoverty_highschool, atschool, color = state)) + geom_point(size = 1.5) + theme_minimal()
+  
+  pl3 
+})
+```
+
+
+###Smoked before 13 years old
+```{r}
+renderPlot({
+  pl4 = ggplot(df1, mapping = aes(belowpoverty_highschool, before13, color = state)) + geom_point(size = 1.5) + theme_minimal()
+  
+  pl4
+
+})
+```
+
+
+###Current Smoker
+```{r}
+renderPlot({
+  pl5 = ggplot(df1, mapping = aes(belowpoverty_highschool, currentsmoker, color = state)) + geom_point(size = 1.5) + theme_minimal()
+  
+  pl5
+
+})
+```
+
+###Frequent Smoker
+```{r}
+renderPlot({
+  pl6 = ggplot(df1, mapping = aes(belowpoverty_highschool, freqsmoker, color = state)) + geom_point(size = 1.5) + theme_minimal()
+  
+  pl6
+})
+```
+
+###Findings
+
+We see that there is no evidence that poverty affects any smoking factors among highschool teens.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
